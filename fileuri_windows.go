@@ -13,6 +13,8 @@ import (
 	"strings"
 )
 
+const maxPath = 260 // Windows MAX_PATH limitation.
+
 var (
 	errVolumeInHost  = errors.New("file URL encodes volume in host field: too few slashes?")
 	errMissingVolume = errors.New("file URL missing drive letter")
@@ -43,7 +45,13 @@ func convertFileURLPath(host, path string) (string, error) {
 		if path == `\` {
 			return "", errMissingShare
 		}
-		return `\\` + host + path, nil
+		path = `\\` + host + path
+		if len(path) >= maxPath { // Too strict because check bytes instead of UTF-16 chars.
+			// Use the extended-length path prefix to avoid MAX_PATH limitations.
+			// See https://docs.microsoft.com/en-us/windows/win32/fileio/naming-a-file#maximum-path-length-limitation.
+			path = `\\?\UNC` + filepath.Clean(path[1:])
+		}
+		return path, nil
 	}
 
 	// If host is empty, path must contain an initial slash followed by a
@@ -51,5 +59,9 @@ func convertFileURLPath(host, path string) (string, error) {
 	if vol := filepath.VolumeName(path[1:]); vol == "" || strings.HasPrefix(vol, `\\`) {
 		return "", errMissingVolume
 	}
-	return path[1:], nil
+	path = path[1:]
+	if len(path) >= maxPath { // Too strict because check bytes instead of UTF-16 chars.
+		path = `\\?\` + filepath.Clean(path)
+	}
+	return path, nil
 }

@@ -69,6 +69,14 @@ func ToFilePath(u *url.URL) (string, error) {
 //
 // FromFilePath does not access the filesystem and does not verify that the path exists.
 func FromFilePath(path string) (*url.URL, error) {
+	// Convert extended-length UNC path to regular UNC path.
+	// See https://docs.microsoft.com/en-us/windows/win32/fileio/naming-a-file#unc-paths.
+	if strings.HasPrefix(path, `\\?\UNC`) {
+		path = `\` + path[7:]
+	} else if strings.HasPrefix(path, `\\?\`) {
+		path = path[4:]
+	}
+
 	if !filepath.IsAbs(path) {
 		return nil, errNotAbsolute
 	}
