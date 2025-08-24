@@ -16,6 +16,7 @@ import (
 var (
 	errVolumeInHost  = errors.New("file URL encodes volume in host field: too few slashes?")
 	errMissingVolume = errors.New("file URL missing drive letter")
+	errMissingShare  = errors.New("file URL missing UNC share name")
 )
 
 func convertFileURLPath(host, path string) (string, error) {
@@ -38,6 +39,9 @@ func convertFileURLPath(host, path string) (string, error) {
 		// helpful error message for it.
 		if filepath.VolumeName(host) != "" {
 			return "", errVolumeInHost
+		}
+		if path == `\` {
+			return "", errMissingShare
 		}
 		return `\\` + host + path, nil
 	}
