@@ -7,6 +7,8 @@
 
 package fileuri_test
 
+import "strings"
+
 var urlTests = []struct {
 	url          string
 	filePath     string
@@ -93,5 +95,117 @@ var urlTests = []struct {
 	{
 		url:     `file://///host.example.com/path/to/file`,
 		wantErr: "file URL missing drive letter",
+	},
+
+	// --- Absolute disk paths ---
+	{
+		url:      `file:///C:/path/to/file.txt`,
+		filePath: `C:\path\to\file.txt`,
+	},
+	{
+		url:          `file:/C:/path/to/file.txt`, // Non-canonical
+		filePath:     `C:\path\to\file.txt`,
+		canonicalURL: `file:///C:/path/to/file.txt`,
+	},
+
+	// --- Root of drive ---
+	{
+		url:      `file:///C:/`,
+		filePath: `C:\`,
+	},
+
+	// --- Special chars ---
+	{
+		url:      `file:///C:/Program%20Files/App/app.exe`,
+		filePath: `C:\Program Files\App\app.exe`,
+	},
+
+	// --- Relative URI (unsupported) ---
+	{
+		url:     `file:relative.txt`,
+		wantErr: `path is not absolute`,
+	},
+
+	// --- UNC standard ---
+	{
+		url:      `file://server/share/file.txt`,
+		filePath: `\\server\share\file.txt`,
+	},
+
+	// --- UNC with extra slashes ---
+	{
+		url:     `file:////server/share/file.txt`,
+		wantErr: `file URL missing drive letter`,
+	},
+	{
+		url:     `file://///server/share/file.txt`,
+		wantErr: `file URL missing drive letter`,
+	},
+
+	// --- Localhost treated as disk path ---
+	{
+		url:          `file://localhost/C:/Windows/System32/cmd.exe`,
+		filePath:     `C:\Windows\System32\cmd.exe`,
+		canonicalURL: `file:///C:/Windows/System32/cmd.exe`,
+	},
+
+	// --- Extended-length disk path (normalize) ---
+	// Path longer than MAX_PATH (260 characters including NUL) requires
+	// extended-length prefix \\?\.
+	// TODO: Characters are UTF-16, U+10000 … U+10FFFF are 2 characters.
+	{
+		url:      `file:///C:` + strings.Repeat(`/long`, 50) + `/ab.txt`,
+		filePath: `C:` + strings.Repeat(`\long`, 50) + `\ab.txt`,
+	},
+	{
+		url:      `file:///C:` + strings.Repeat(`/long`, 50) + `/abX.txt`,
+		filePath: `\\?\C:` + strings.Repeat(`\long`, 50) + `\abX.txt`,
+	},
+
+	// --- Extended-length UNC (normalize) ---
+	// Path longer than MAX_PATH (260 characters including NUL) requires
+	// extended-length prefix \\?\UNC.
+	// TODO: Characters are UTF-16, U+10000 … U+10FFFF are 2 characters.
+	{
+		url:      `file://server/share` + strings.Repeat(`/long`, 47) + `/filea.txt`,
+		filePath: `\\server\share` + strings.Repeat(`\long`, 47) + `\filea.txt`,
+	},
+	{
+		url:      `file://server/share` + strings.Repeat(`/long`, 47) + `/fileaX.txt`,
+		filePath: `\\?\UNC\server\share` + strings.Repeat(`\long`, 47) + `\fileaX.txt`,
+	},
+
+	// --- Missing path after scheme ---
+	{
+		url:     `file://`,
+		wantErr: `file URL missing path`,
+	},
+	{
+		url:     `file://localhost`,
+		wantErr: `file URL missing path`,
+	},
+
+	// --- Wrong scheme ---
+	{
+		url:     `ftp:///C:/Windows/System32`,
+		wantErr: `non-file URL`,
+	},
+
+	// --- Incorrect disk syntax ---
+	{
+		url:     `file:///Z|/invalid/path.txt`,
+		wantErr: `file URL missing drive letter`,
+	},
+
+	// --- Host but no share (UNC malformed) ---
+	{
+		url:     `file://server/`,
+		wantErr: `file URL missing UNC share name`,
+	},
+
+	// --- Four slashes without host ---
+	{
+		url:     `file://///`,
+		wantErr: `file URL missing drive letter`,
 	},
 }
