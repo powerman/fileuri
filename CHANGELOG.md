@@ -5,6 +5,15 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.3.0] - 2026-04-07
+
+### 🔔 Changed
+
+- Require Go 1.25.0 by @powerman in [23cb250]
+
+[0.3.0]: https://github.com/powerman/fileuri/compare/v0.2.0..v0.3.0
+[23cb250]: https://github.com/powerman/fileuri/commit/23cb2500ab7bab92947bd197aa1f7f57603b74dd
+
 ## [0.2.0] - 2025-08-24
 
 ### 🚀 Added
