@@ -8,20 +8,22 @@
 package fileuri_test
 
 import (
-	"net/url"
+	urlpkg "net/url"
 	"testing"
 
 	"github.com/powerman/fileuri"
 )
 
 func TestURLToFilePath(t *testing.T) {
+	t.Parallel()
 	for _, tc := range urlTests {
 		if tc.url == "" {
 			continue
 		}
 
 		t.Run(tc.url, func(t *testing.T) {
-			u, err := url.Parse(tc.url)
+			t.Parallel()
+			u, err := urlpkg.Parse(tc.url)
 			if err != nil {
 				t.Fatalf("url.Parse(%q): %v", tc.url, err)
 			}
@@ -46,12 +48,14 @@ func TestURLToFilePath(t *testing.T) {
 }
 
 func TestURLFromFilePath(t *testing.T) {
+	t.Parallel()
 	for _, tc := range urlTests {
 		if tc.filePath == "" {
 			continue
 		}
 
 		t.Run(tc.filePath, func(t *testing.T) {
+			t.Parallel()
 			u, err := fileuri.FromFilePath(tc.filePath)
 			if err != nil {
 				if err.Error() == tc.wantErr {

@@ -11,13 +11,15 @@ package fileuri
 
 import (
 	"errors"
-	"net/url"
+	urlpkg "net/url"
 	"path/filepath"
 	"strings"
 )
 
 // TODO(golang.org/issue/32456): If accepted, move these functions into the
 // net/url package.
+
+const scheme = "file"
 
 var (
 	errNotAbsolute = errors.New("path is not absolute")
@@ -34,8 +36,8 @@ var (
 // and UNC file URLs (file://host/share/path/to/file).
 //
 // ToFilePath does not access the filesystem and does not verify that the path exists.
-func ToFilePath(u *url.URL) (string, error) {
-	if u.Scheme != "file" {
+func ToFilePath(u *urlpkg.URL) (string, error) {
+	if u.Scheme != scheme {
 		return "", errNonFile
 	}
 
@@ -68,7 +70,7 @@ func ToFilePath(u *url.URL) (string, error) {
 // to UNC file URLs (file://host/share/path/to/file).
 //
 // FromFilePath does not access the filesystem and does not verify that the path exists.
-func FromFilePath(path string) (*url.URL, error) {
+func FromFilePath(path string) (*urlpkg.URL, error) {
 	// Convert extended-length UNC path to regular UNC path.
 	// See https://docs.microsoft.com/en-us/windows/win32/fileio/naming-a-file#unc-paths.
 	if strings.HasPrefix(path, `\\?\UNC`) {
@@ -93,8 +95,8 @@ func FromFilePath(path string) (*url.URL, error) {
 				// \\host.example.com (without a share name)
 				// becomes
 				// file://host.example.com/
-				return &url.URL{
-					Scheme: "file",
+				return &urlpkg.URL{
+					Scheme: scheme,
 					Host:   path,
 					Path:   "/",
 				}, nil
@@ -103,8 +105,8 @@ func FromFilePath(path string) (*url.URL, error) {
 			// \\host.example.com\Share\path\to\file
 			// becomes
 			// file://host.example.com/Share/path/to/file
-			return &url.URL{
-				Scheme: "file",
+			return &urlpkg.URL{
+				Scheme: scheme,
 				Host:   path[:i],
 				Path:   filepath.ToSlash(path[i:]),
 			}, nil
@@ -113,8 +115,8 @@ func FromFilePath(path string) (*url.URL, error) {
 		// C:\path\to\file
 		// becomes
 		// file:///C:/path/to/file
-		return &url.URL{
-			Scheme: "file",
+		return &urlpkg.URL{
+			Scheme: scheme,
 			Path:   "/" + filepath.ToSlash(path),
 		}, nil
 	}
@@ -122,8 +124,8 @@ func FromFilePath(path string) (*url.URL, error) {
 	// /path/to/file
 	// becomes
 	// file:///path/to/file
-	return &url.URL{
-		Scheme: "file",
+	return &urlpkg.URL{
+		Scheme: scheme,
 		Path:   filepath.ToSlash(path),
 	}, nil
 }
